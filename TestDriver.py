@@ -129,7 +129,7 @@ if __name__ == '__main__':
             'n_items',
             'PTAS_profit', 'PTAS_time_ms', 'PTAS_mem_B',
             'DP_profit', 'DP_time_ms', 'DP_mem_B',
-            'EDA_profit', 'EDA_time_ms', 'EDA_mem_B'
+            '2DKEDA_profit', '2DKEDA_time_ms', '2DKEDA_mem_B'
         ])
         # Data rows
         for r in all_results:
@@ -137,6 +137,6 @@ if __name__ == '__main__':
                 r['n_items'],
                 f"{r['ptas']['profit']:.4f}", f"{r['ptas']['time_ms']:.2f}", r['ptas']['mem_bytes'],
                 f"{r['dp']['profit']:.4f}", f"{r['dp']['time_ms']:.2f}", r['dp']['mem_bytes'],
-                f"{r['eda']['profit']:.4f}", f"{r['eda']['time_ms']:.2f}", r['eda']['mem_bytes'],
+                f"{r['2DKEDA']['profit']:.4f}", f"{r['2DKEDA']['time_ms']:.2f}", r['2DKEDA']['mem_bytes'],
             ])
     print(f"\nAll experiments completed. Results saved to {csv_filename}")
