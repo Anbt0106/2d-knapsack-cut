@@ -1,132 +1,142 @@
-# from approximation.PTAS import PTAS
-# import random
-# from typing import List, Tuple
-# from dynamic_programming import DP
-# from dynamic_programming.DP import DPSolver
-# import random
-# import time
-# import sys
-#
-# class TestDriver:
-#     def __init__(self):
-#         pass
-#
-#     def generate_test_case(self, num_items: int, width_range=(0.01, 1.0), height_range=(0.01, 1.0)) -> List[
-#         Tuple[float, float]]:
-#         items = []
-#         for _ in range(num_items):
-#             width = random.uniform(width_range[0], width_range[1])
-#             height = random.uniform(height_range[0], height_range[1])
-#             items.append((width, height))
-#         return items
-#
-#     def testPTAS(self, num_cases=5, items_per_case=100):
-#         for i in range(num_cases):
-#             items = self.generate_test_case(items_per_case)
-#             start_time = time.time()
-#             solver = PTAS(items, epsilon=0.01)
-#             result = solver.solve()
-#             end_time = time.time()
-#
-#             memory_used = sys.getsizeof(solver)
-#             elapsed_time = end_time - start_time
-#             print(f"Case {i + 1}: approx profit = {result['profit']:.4f}, Time = {elapsed_time:.6f}s, Memory = {memory_used} bytes")
-#
-#     def testDP(self, num_cases=5, items_per_case=100):
-#         for i in range(num_cases):
-#             items = self.generate_test_case(items_per_case)
-#             start_time = time.time()
-#             solver = DPSolver(items, resolution=100)  # Sử dụng DPSolver thay vì PTAS
-#             result = solver.solve()
-#             end_time = time.time()
-#
-#             memory_used = sys.getsizeof(solver)
-#
-#             elapsed_time = end_time - start_time
-#             print(f"Case {i + 1}: max profit = {result['profit']:.4f}, Time = {elapsed_time:.6f}s, Memory = {memory_used} bytes")
-#
-#
-# # import tracemalloc
-# # def testPTAS(self, num_cases=10, items_per_case=1000):
-# #     for i in range(num_cases):
-# #         items = self.generate_test_case(items_per_case)
-# #         start_time = time.time()
-# #         solver = PTAS(items, epsilon=0.01)
-# #         result = solver.solve()
-# #         end_time = time.time()
-# #         memory_used = sys.getsizeof(solver)
-# #         elapsed_time = end_time - start_time
-# #         print(f"Case {i+1}: approx profit = {result['profit']:.4f}, Time = {elapsed_time:.6f}s, Memory = {memory_used} bytes")
-# #
-# # def testDP(self, num_cases=10, items_per_case=1000):
-# #     for i in range(num_cases):
-# #         items = self.generate_test_case(items_per_case)
-# #         start_time = time.time()
-# #         solver = DPSolver(items, resolution=1000)
-# #         result = solver.solve()
-# #         end_time = time.time()
-# #         memory_used = sys.getsizeof(solver)
-# #         elapsed_time = end_time - start_time
-# #         print(f"Case {i+1}: max profit = {result['profit']:.4f}, Time = {elapsed_time:.6f}s, Memory = {memory_used} bytes")
-
-
-from approximation.PTAS import PTAS
-from dynamic_programming.DP import DPSolver
-from heuristic.TwoDKEDA import TwoDKEDA
 import random
 import time
 import tracemalloc
 from typing import List, Tuple
 
+from approximation.PTAS import PTAS
+from dynamic_programming.DP import GuillotineDPSolver
+from heuristic.TwoDKEDA import TwoDKEDA
+
 
 class TestDriver:
-    def __init__(self):
-        pass
+    @staticmethod
+    def generate_test_case(num_items, width_range=(0.01, 1.0), height_range=(0.01, 1.0)):
+        items = []
+        for _ in range(num_items):
+            width = random.uniform(width_range[0], width_range[1])
+            height = random.uniform(height_range[0], height_range[1])
+            items.append((width, height))
+        return items
 
-    def generate_test_case(self, num_items: int, width_range=(0.01, 1.0), height_range=(0.01, 1.0)) -> List[
-        Tuple[float, float]]:
-        return [(random.uniform(*width_range), random.uniform(*height_range)) for _ in range(num_items)]
+    def test_ptas(self, items: List[Tuple[float, float]], epsilon: float) -> dict:
+        """
+        Run the PTAS solver on items.
+        Returns a dict with profit, time in ms, and peak memory in bytes.
+        """
+        tracemalloc.start()
+        start = time.perf_counter()
+        solver = PTAS(items, epsilon)
+        profit = solver.solve()
+        elapsed = (time.perf_counter() - start) * 1000  # ms
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        return {
+            'profit': profit,
+            'time_ms': elapsed,
+            'mem_bytes': peak
+        }
 
-    def testPTAS(self, num_cases=10, items_per_case=1000):
-        for i in range(num_cases):
-            items = self.generate_test_case(items_per_case)
-            tracemalloc.start()
-            start_time = time.perf_counter()
-            solver = PTAS(items, epsilon=0.01)
-            result = solver.solve()
-            end_time = time.perf_counter()
-            current, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
+    def test_dp(self, items: List[Tuple[float, float]], resolution: int) -> dict:
+        """
+        Run the DP Guillotine solver on items.
+        Returns a dict with profit, time in ms, and peak memory in bytes.
+        """
+        tracemalloc.start()
+        start = time.perf_counter()
+        solver = GuillotineDPSolver(items, resolution=resolution)
+        result = solver.solve()
+        elapsed = (time.perf_counter() - start) * 1000  # ms
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        return {
+            'profit': result['profit'],
+            'time_ms': elapsed,
+            'mem_bytes': peak
+        }
 
-            print(f"Case {i + 1}: approx profit = {result['profit']:.4f}, "
-                  f"Time = {(end_time - start_time) * 1000:.3f} ms, "
-                  f"Memory = {peak / 1024:.2f} KB")
+    def test_2DKEDA(self, items: List[Tuple[float, float]], max_time: float = 10.0,
+                    pop_size: int = 20, keep_frac: float = 0.2, alpha: float = 0.3) -> dict:
+        """
+        Run the TwoDKEDA solver on items.
+        Returns a dict with profit, time in ms, and peak memory in bytes.
+        """
+        tracemalloc.start()
+        start = time.perf_counter()
+        solver = TwoDKEDA(items, max_time=max_time, pop_size=pop_size,
+                          keep_frac=keep_frac, alpha=alpha)
+        result = solver.evolve()
+        elapsed = (time.perf_counter() - start) * 1000  # ms
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        return {
+            'profit': result['profit'],
+            'time_ms': elapsed,
+            'mem_bytes': peak
+        }
 
-    def testDP(self, num_cases=10, items_per_case=1000):
-        for i in range(num_cases):
-            items = self.generate_test_case(items_per_case)
-            tracemalloc.start()
-            start_time = time.perf_counter()
-            solver = DPSolver(items, resolution=100)
-            result = solver.solve()
-            end_time = time.perf_counter()
-            current, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
+    def run_experiments(self,
+                        item_sizes: List[int],
+                        epsilon: float = 0.05,
+                        resolution: int = 100,
+                        eda_time: float = 10.0) -> List[dict]:
+        """
+        Run comparative experiments across PTAS, DP, and EDA.
+        Returns a list of result dicts.
+        """
+        results = []
+        for n in item_sizes:
+            print(f"\nTesting with {n} items...")
+            items = self.generate_test_case(n)
 
-            print(f"Case {i + 1}: max profit = {result['profit']:.4f}, "
-                  f"Time = {(end_time - start_time) * 1000:.3f} ms, "
-                  f"Memory = {peak / 1024:.2f} KB")
+            ptas_res = self.test_ptas(items, epsilon)
+            print(
+                f"PTAS: profit={ptas_res['profit']:.4f}, time={ptas_res['time_ms']:.2f}ms, mem={ptas_res['mem_bytes']} Bytes")
 
-    def TwoDKEDA(self, num_cases=10, items_per_case=1000, max_time=60):
-        for i in range(num_cases):
-            items = self.generate_test_case(items_per_case)
-            tracemalloc.start()
-            start_time = time.perf_counter()
-            solver = TwoDKEDA(items, max_time=max_time)
-            result = solver.solve()
-            end_time = time.perf_counter()
-            current, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
-            print(f"Case {i + 1}: max profit = {result['profit']:.4f}, "
-                  f"Time = {(end_time - start_time) * 1000:.3f} ms, "
-                  f"Memory = {peak / 1024:.2f} KB")
+            dp_res = self.test_dp(items, resolution)
+            print(
+                f"DP:   profit={dp_res['profit']:.4f}, time={dp_res['time_ms']:.2f}ms, mem={dp_res['mem_bytes']} Bytes")
+
+            eda_res = self.test_2DKEDA(items, max_time=eda_time)
+            print(
+                f"2DKEDA:  profit={eda_res['profit']:.4f}, time={eda_res['time_ms']:.2f}ms, mem={eda_res['mem_bytes']} Bytes")
+
+            results.append({
+                'n_items': n,
+                'ptas': ptas_res,
+                'dp': dp_res,
+                'eda': eda_res
+            })
+        return results
+
+
+if __name__ == '__main__':
+    driver = TestDriver()
+    # Define problem sizes and parameters
+    sizes = [10, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000, 4500, 5000]
+    eps = 0.05
+    res = 100
+    eda_t = 10.0  # seconds per run
+    # Run experiments
+    all_results = driver.run_experiments(sizes, epsilon=eps, resolution=res, eda_time=eda_t)
+
+    import csv
+
+    csv_filename = 'experiment_results.csv'
+    with open(csv_filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        # Header row
+        writer.writerow([
+            'n_items',
+            'PTAS_profit', 'PTAS_time_ms', 'PTAS_mem_B',
+            'DP_profit', 'DP_time_ms', 'DP_mem_B',
+            'EDA_profit', 'EDA_time_ms', 'EDA_mem_B'
+        ])
+        # Data rows
+        for r in all_results:
+            writer.writerow([
+                r['n_items'],
+                f"{r['ptas']['profit']:.4f}", f"{r['ptas']['time_ms']:.2f}", r['ptas']['mem_bytes'],
+                f"{r['dp']['profit']:.4f}", f"{r['dp']['time_ms']:.2f}", r['dp']['mem_bytes'],
+                f"{r['eda']['profit']:.4f}", f"{r['eda']['time_ms']:.2f}", r['eda']['mem_bytes'],
+            ])
+    print(f"\nAll experiments completed. Results saved to {csv_filename}")
