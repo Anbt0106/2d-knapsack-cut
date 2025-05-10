@@ -72,6 +72,7 @@
 
 from approximation.PTAS import PTAS
 from dynamic_programming.DP import DPSolver
+from heuristic.TwoDKEDA import TwoDKEDA
 import random
 import time
 import tracemalloc
@@ -82,7 +83,8 @@ class TestDriver:
     def __init__(self):
         pass
 
-    def generate_test_case(self, num_items: int, width_range=(0.01, 1.0), height_range=(0.01, 1.0)) -> List[Tuple[float, float]]:
+    def generate_test_case(self, num_items: int, width_range=(0.01, 1.0), height_range=(0.01, 1.0)) -> List[
+        Tuple[float, float]]:
         return [(random.uniform(*width_range), random.uniform(*height_range)) for _ in range(num_items)]
 
     def testPTAS(self, num_cases=10, items_per_case=1000):
@@ -96,7 +98,7 @@ class TestDriver:
             current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
-            print(f"Case {i+1}: approx profit = {result['profit']:.4f}, "
+            print(f"Case {i + 1}: approx profit = {result['profit']:.4f}, "
                   f"Time = {(end_time - start_time) * 1000:.3f} ms, "
                   f"Memory = {peak / 1024:.2f} KB")
 
@@ -111,6 +113,20 @@ class TestDriver:
             current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
-            print(f"Case {i+1}: max profit = {result['profit']:.4f}, "
+            print(f"Case {i + 1}: max profit = {result['profit']:.4f}, "
+                  f"Time = {(end_time - start_time) * 1000:.3f} ms, "
+                  f"Memory = {peak / 1024:.2f} KB")
+
+    def TwoDKEDA(self, num_cases=10, items_per_case=1000, max_time=60):
+        for i in range(num_cases):
+            items = self.generate_test_case(items_per_case)
+            tracemalloc.start()
+            start_time = time.perf_counter()
+            solver = TwoDKEDA(items, max_time=max_time)
+            result = solver.solve()
+            end_time = time.perf_counter()
+            current, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            print(f"Case {i + 1}: max profit = {result['profit']:.4f}, "
                   f"Time = {(end_time - start_time) * 1000:.3f} ms, "
                   f"Memory = {peak / 1024:.2f} KB")
